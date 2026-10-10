@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<head>
+	
+	</head>
+	<body>
+		<header>
+		</header>
+		<main>
+			<div id="hud">
+    				<h2>Fall of Constantinople</h2>
+    				<p>1453</p>
+			</div>
+			<div id="map" style="height: 400px"></div>
+		</main>
+		<footer>
+		</footer>
+		<script type="module">
+import Globe from
+    "https://cdn.jsdelivr.net/npm/globe.gl/+esm";
+
+const globe = Globe()(document.getElementById("map"))
+    .globeImageUrl(
+        "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+    )
+    .backgroundImageUrl(
+        "https://unpkg.com/three-globe/example/img/night-sky.png"
+    )
+    .pointsData([
+        {
+            lat: 41.0082,
+            lng: 28.9784,
+            name: "Constantinople"
+        }
+    ])
+    .pointLat("lat")
+    .pointLng("lng")
+    .pointLabel("name")
+    .pointAltitude(0.3)
+    .pointRadius(0.5);
+		</script>
+	</body>
+</html>
