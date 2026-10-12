@@ -7,8 +7,7 @@ create table tb_location (
 
 create table tb_year (
 	id integer primary key autoincrement unique not null,
-	year integer not null,
-	era text not null check(era in ('M', 'SM'))
+	year integer not null
 );
 
 create table tb_content (
@@ -22,7 +21,7 @@ create table tb_content (
 );
 
 insert into tb_location(city, latitude, longitude) values ('jakarta', -6.1750, 106.8266);
-insert into tb_year(year, era) values ('1945', 'M');
+insert into tb_year(year) values (1945);
 insert into tb_content(
 	year_id,
 	location_id,
@@ -30,7 +29,7 @@ insert into tb_content(
 	content
 ) 
 values (
-	(select id from tb_year where year = '1945' and era = 'M'),
+	(select id from tb_year where year = 1945),
 	(select id from tb_location where city = 'jakarta'),
 	"Title: Percobaan Pertama",
 	"Content: Percobaan Pertama"

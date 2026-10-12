@@ -35,7 +35,6 @@ export async function get_locations(req, env){
 	// get year
 	const get = await GET(req);
 	const year = get.year;
-	const era = get.era;
 
 	// fetch locations based on year
 	const query = await env.DB.prepare(`
@@ -52,12 +51,15 @@ export async function get_locations(req, env){
 				tb_location 
 					on tb_content.location_id = tb_location.id
 			where
+				tb_year.year = ?
+		`).bind(year).all();
+/*
+	where
 				tb_content.year_id = (
 					select id from tb_year 
-					where tb.year.year = ? and
-						tb_year.era = ?
+					where tb.year.year = ?
 				)
-		`).bind(year, era).all();
+*/
 	if(!query)
 		return new Response(JSON.stringify({
 			success: false,
@@ -71,7 +73,6 @@ export async function get_locations(req, env){
 		code: "LOCATIONS_LOADED",
 		message: "Locations are loaded successfully",
 		year,
-		era,
 		locations: rows.map(row => {
 			city: row.city,
 			lng: row.longitude, 
@@ -112,7 +113,38 @@ export async function get_content(req, env){
 	// get selected location
 	const city = get.city;
 	// fetch content where year = sellected year and location = selected location
-	const query = env.DB.prepare("");
+	const query = env.DB.prepare(`
+			select 
+				title, text 
+			from 
+				tb_content 
+			join
+				tb_year
+				on tb_year.id = tb_content.year_id
+			join 
+				tb_location
+				on tb_location.id = ttb_content.location_id
+			where 
+				tb_year = ? and tb_location.city = ?				
+		`).bind(year, city).all();
+	if(!query)
+		return new Response(JSON.stringify({
+			success: false,
+			code: "CONTENTS_NOT_FOUND",
+			message: "Contents not found"
+		}), {status: 404});
+	const rows = query.results;
+	const payload = {
+		success: true,
+		code: "CONTENTS_LOADED",
+		message: "Contents are loaded successfully",
+		year,
+		city,
+		contentss: rows.map(row => {title, text});
+	};
+
+	return new Response(JSON.stringify(payload), {status: 200});
+
 	/*
 	 {
 		success: true,
