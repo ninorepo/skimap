@@ -2,15 +2,15 @@ name="skimap"
 main="src/router.js"
 compatibility_date="2026-09-10"
 
-#[vars]
+[vars]
 #TELEGRAM_BOT_TOKEN="8866004025:AAH5Yxe-pYINxu5nPdMZ7qKz14YUqOz7q2g"
 #TELEGRAM_CHAT_ID="6315269810"
-#GOOGLE_CLIENT_ID="236198254074-ml634mor8nqnnm9ol2u5bskqosqlgc3f.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID="236198254074-ml634mor8nqnnm9ol2u5bskqosqlgc3f.apps.googleusercontent.com"
 
 [assets]
 directory="./public"
 binding="PUBLIC"
-run_worker_first=["/api/*", "/"]
+run_worker_first=["/api/*"]
 
 [[kv_namespaces]]
 binding="KV"

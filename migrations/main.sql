@@ -7,7 +7,7 @@ create table tb_location (
 
 create table tb_year (
 	id integer primary key autoincrement unique not null,
-	year integer not null
+	year integer unique not null
 );
 
 create table tb_content (
