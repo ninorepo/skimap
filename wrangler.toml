@@ -14,12 +14,12 @@ run_worker_first=["/api/*"]
 
 [[kv_namespaces]]
 binding="KV"
-id="xxx"
+id="78ecbd6e9dc9493d82d59c2789d3818b"
 
 [[d1_databases]]
 binding="DB"
 database_name="db_skimap"
-database_id="xxx"
+database_id="ea1f1ca6-583a-4021-9726-a38d11b7fbd3"
 #migrations_dir="migrations"
 
 #[[r2_buckets]]
