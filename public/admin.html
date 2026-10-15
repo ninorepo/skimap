@@ -151,13 +151,14 @@
 }
 
   </style>
+
 </head>
 
 <body>
   <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
 
     <header class="mb-8">
-      <p class="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
+      <p id="welcome-message" class="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
         Administration
       </p>
       <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -304,7 +305,16 @@
       </div>
     </div>
   </dialog>
-
+  <script>
+	const response = fetch("/api/verify");
+	if(!response)
+		location.replace("/login");
+	const data = response.json();
+	if(!data.username)
+		location.replace("/login");
+	const welcome_message = document.getElementById("welcome-message");
+	welcome_message.textContent = `Hi ${data.username}, welcome to`;
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/hugerte@1/hugerte.min.js"></script>
   <script src="/admin.js"></script>
 </body>
