@@ -306,14 +306,18 @@
     </div>
   </dialog>
   <script>
-	const response = fetch("/api/verify");
+verify();
+async function verify(){
+	const response = await fetch("/api/user/verify");
 	if(!response)
-		location.replace("/login");
-	const data = response.json();
-	if(!data.username)
-		location.replace("/login");
+		window.location.replace("/login");
+	const json = await response.json();
+	if(!json.success)
+		window.location.replace("/login");
 	const welcome_message = document.getElementById("welcome-message");
-	welcome_message.textContent = `Hi ${data.username}, welcome to`;
+	const user = json.user;
+	welcome_message.textContent = `Hi ${user.username}, welcome to`;
+}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/hugerte@1/hugerte.min.js"></script>
   <script src="/admin.js"></script>
