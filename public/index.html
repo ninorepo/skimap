@@ -90,7 +90,6 @@
 
     dialog::backdrop {
       background: rgba(15,23,42,.5);
-      backdrop-filter: blur(4px);
     }
 
     dialog .container {
@@ -163,6 +162,10 @@
     .marker-events * {
       pointer-events: auto;
       cursor: pointer;
+    }
+
+    .marker-events:hover {
+	background: darkcyan;
     }
 
     @media (max-width: 480px) {
