@@ -1,43 +1,20 @@
-import {init,
-	get_locations,
-	get_contents,
+import {
 	verify,
 	google_auth,
-	list_histories,
-	edit_history,
-	delete_history,
-	list_locations,
-	get_history,
-	add_city
+	assistant_ask
 } from "./backend.js"
 
 export default{
 	async fetch(req, env){
 		const url = new URL(req.url);
-		if( req.method === "GET" && url.pathname.startsWith("/api/init") )
-			return init(req, env);
-		if( req.method === "GET" && url.pathname.startsWith("/api/contents") )
-			return get_contents(req, env);
-		if( req.method === "GET" && url.pathname.startsWith("/api/locations") )
-			return get_locations(req, env);
-		if( req.method === "GET" && url.pathname.startsWith("/api/editor/locations"))
-			return list_locations(req, env);
-		if( req.method === "GET" && url.pathname.startsWith("/api/editor/list-histories") )
-			return list_histories(req, env);
-		if( req.method === "GET" && url.pathname.startsWith("/api/editor/get-history"))
-			return get_history(req, env);
-		if( req.method === "POST" && url.pathname.startsWith("/api/editor/edit-history") )
-			return edit_history(req, env);
-		if( req.method === "GET" && url.pathname.startsWith("/api/editor/delete-history") )
-			return delete_history(req, env);
-		if( req.method === "POST" && url.pathname.startsWith("/api/editor/add-city"))
-			return add_city(req, env);
 		if( req.method === "GET" && url.pathname.startsWith("/api/user/verify"))
 			return verify(req, env);
 		if( req.method === "POST" && url.pathname.startsWith("/api/user/auth") )
 			return google_auth(req, env);
 		if( req.method === "GET" && url.pathname.startsWith("/api/user/logout") )
 			return logout(req, env);
+		if( req.method === "POST" && url.pathname.startsWith("/api/assistant/ask") )
+			return assistant_ask(req, env);
 	}
 }
 

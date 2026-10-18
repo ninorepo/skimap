@@ -6,33 +6,144 @@ const choose_year = document.getElementById("choose-year");
 const dialog_content = document.getElementById("dialog-content");
 const content = document.getElementById("content");
 const dialog_content_cancel = document.getElementById("dialog-content-close");
+const all_button = document.createElement("button"); all_button.className = "button-year"; all_button.textContent = "Semua";
+let gpt_response = [];
 
+/*
+ * Custom Marker
+ * */
+/*
+const markers = new Map();
+const globe = Globe();
+globe(document.getElementById("map"))
+	.globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
+	.backgroundImageUrl("https://unpkg.com/three-globe/example/img/night-sky.png")
+	.htmlLat( data => data.latitude )
+	.htmlLng( data => data.longitude )
+	.htmlElement(data => {
+    const id = "marker_id_" + data.city;
 
-// load years into hud menu
-init();
+    let marker = markers.get(id);
 
-//import Globe from
+    if (!marker) {
+        marker = document.createElement("div");
+        marker.id = id;
+        marker.className = "marker";
 
-const globe = Globe()(document.getElementById("map"))
-    .globeImageUrl(
-        "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-    )
-    .backgroundImageUrl(
-        "https://unpkg.com/three-globe/example/img/night-sky.png"
-    )
-    .pointsData([
-        {
-            lat: 41.0082,
-            lon: 28.9784,
-            city: "Constantinople"
+        marker.innerHTML = `
+            <div class="marker-events"></div>
+            <div class="marker-pin"><p>&#128205;</p></div>
+        `;
+
+        markers.set(id, marker);
+    }
+
+    const event = document.createElement("div");
+    event.innerHTML = `
+        <p>
+            <b>
+                <span class="marker-year">${data.year} - </span>
+                <span class="marker-city">${data.city}</span>
+            </b>
+        </p>
+        <p class="marker-title">${data.title}</p>
+    `;
+
+    marker.querySelector(".marker-events").appendChild(event);
+    return marker;
+});
+*/
+
+const markers = new Map();
+
+const globe = Globe();
+const world = globe(document.getElementById("map"))
+    .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
+    .backgroundImageUrl("https://unpkg.com/three-globe/example/img/night-sky.png")
+
+    // Draw city markers
+    .htmlLat(data => data.latitude)
+    .htmlLng(data => data.longitude)
+    .htmlElement(data => {
+        const id = data.city;
+
+        let marker = markers.get(id);
+
+        if (!marker) {
+            const element = document.createElement("div");
+            element.id = "marker_id_" + id;
+            element.className = "marker";
+
+            element.innerHTML = `
+                <div class="marker-events"></div>
+                <div class="marker-pin"><p>&#128205;</p></div>
+            `;
+	    
+            marker = {
+                latitude: data.latitude,
+                longitude: data.longitude,
+                element
+            };
+
+            markers.set(id, marker);
         }
-    ])
-    .pointLat("lat")
-    .pointLng("lon")
-    .pointLabel("city")
-    .pointAltitude(0.3)
-    .pointRadius(0.5)
-    .onPointClick(point_click_handler);
+
+        // Add the historical event
+        const event = document.createElement("div");
+
+        event.innerHTML = `
+            <p>
+                <b>
+                    <span class="marker-year">${data.year} - </span>
+                    <span class="marker-city">${data.city}</span>
+                </b>
+            </p>
+            <p class="marker-title">${data.title}</p>
+        `;
+
+	event.addEventListener("click", async (e) => {
+		e.stopPropagation();
+		console.log("click: ", e);
+		await read_more(data.title, data.content);
+	});
+        marker.element
+            .querySelector(".marker-events")
+            .appendChild(event);
+	
+	updateArcs();
+        return marker.element;
+    })
+
+    // Draw directional arcs between consecutive cities
+    .arcsData([])
+    .arcStartLat(d => d.startLat)
+    .arcStartLng(d => d.startLng)
+    .arcEndLat(d => d.endLat)
+    .arcEndLng(d => d.endLng)
+    .arcColor(() => "#ff5722")
+    .arcStroke(0.1)
+    .arcDashLength(0.2)
+    .arcDashGap(0.05)
+    .arcDashAnimateTime(2000);
+
+
+// Build arcs using the insertion order of the Map
+function updateArcs() {
+    const locations = Array.from(markers.values());
+
+    const arcs = [];
+
+    for (let i = 0; i < locations.length - 1; i++) {
+        arcs.push({
+            startLat: locations[i].latitude,
+            startLng: locations[i].longitude,
+            endLat: locations[i + 1].latitude,
+            endLng: locations[i + 1].longitude
+        });
+    }
+
+    world.arcsData(arcs);
+}
 
 /*
 //DEBUG
@@ -48,61 +159,41 @@ const globe = Globe()(document.getElementById("map"))
     .onPointClick(point_click_handler);
 */
 
+init();
+init_prompt(globe);
+
+
 // FUNCTIONS
 async function init(){
-	//button pilih tahun
-	choose_year.addEventListener("click", choose_year_handler);
-	dialog_years_cancel.addEventListener("click", () => {dialog_years.close()});
-	dialog_content_cancel.addEventListener("click", () => {dialog_content.close()});
-
-	// load years
-	const response = await fetch("/api/init");
-	if(!response){
-		console.log("init(): failed to fetch /api/init");
-		return false;
-	}
-	const data = await response.json();
-	if(!response){
-		console.log("init(): failed to load json response");
-		return false;
-	}
-	
-	data.years.forEach(elem => {
-		const button = document.createElement("button");
-		button.className = "button-year";
-		button.textContent = int_masehi(elem);
-		button.addEventListener("click", button_year_handler);
-		dialog_years.appendChild(button);
-	});
 	return true;
 }
 
-function choose_year_handler(ev){
-	const button = ev.target;
-	const title = document.querySelector("#hud h2");
-	title.textContent = button.textContent;
-	dialog_years.showModal();
-}
+function init_prompt(globe){
+document.getElementById("ask").addEventListener("click", async () => {
+  const prompt = document.getElementById("prompt-input").value;
 
-async function button_year_handler(ev){
-	const button = ev.target;
-	// load locations
-	const response = await fetch("/api/locations?year=" + masehi_int(button.textContent));
-	if(!response){
-		console.log("button_year_handler(): failed to fetch /api/locations");
-		return false;
-	}
-	const data = await response.json();
-	if(!data){
-		console.log("failed to load locations json");
-		return false;
-	}
-	// update globe points
-	globe.pointsData(data.locations);
-	// add event listener to the points
-	current_year = masehi_int(button.textContent);
-	dialog_years.close();
-	return true;
+  if (!prompt.trim()) return;
+
+  const response = await fetch("/api/assistant/ask", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ prompt })
+  });
+
+  if (!response.ok) {
+    console.error("Request failed:", response.status);
+    return;
+  }
+
+  const data = await response.json();
+  gpt_response = structuredClone(data);
+  console.log("prompt events: ", data);
+  markers.clear();
+  globe.htmlElementsData(data);
+  console.log("markers :", markers);
+});
 }
 
 async function point_click_handler(pt, ev){
@@ -134,26 +225,22 @@ async function point_click_handler(pt, ev){
 	dialog_content.showModal();
 }
 
-// HELPERS
-function int_masehi(year) {
-    if (year <= 0) {
-        return `${1 - year} SM`;
-    }
+function read_more(title, content){
+	return new Promise( resolve => {
+	const dialog = document.getElementById("read-more");
+	const h1 = document.querySelector("#read-more h1");
+	const div = document.querySelector("#read-more .content");
+	const close = document.querySelector("#read-more button");
+	
+	h1.textContent = title;
+	div.innerHTML = content;
+	dialog.showModal();
+	close.onclick = () => {
+		dialog.close();
+		resolve(true);
+	};
+	
+	});
 
-    return `${year} M`;
+
 }
-
-function masehi_int(str) {
-    str = str.trim().toUpperCase();
-
-    if (str.endsWith("SM")) {
-        return 1 - parseInt(str);
-    }
-
-    if (str.endsWith("M")) {
-        return parseInt(str);
-    }
-
-    return NaN;
-}
-

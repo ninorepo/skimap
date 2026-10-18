@@ -1,0 +1,211 @@
+// GLOBALS
+let current_year = 0;
+const dialog_years_cancel = document.getElementById("dialog-years-cancel");
+const dialog_years = document.getElementById("dialog-years");
+const choose_year = document.getElementById("choose-year");
+const dialog_content = document.getElementById("dialog-content");
+const content = document.getElementById("content");
+const dialog_content_cancel = document.getElementById("dialog-content-close");
+const all_button = document.createElement("button"); all_button.className = "button-year"; all_button.textContent = "Semua";
+
+// load years into hud menu
+init();
+
+//import Globe from
+/*
+const globe = Globe()(document.getElementById("map"))
+    .globeImageUrl(
+        "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+    )
+    .backgroundImageUrl(
+        "https://unpkg.com/three-globe/example/img/night-sky.png"
+    )
+    .pointLat("lat")
+    .pointLng("lon")
+    .pointLabel("city")
+    .pointAltitude(0.3)
+    .pointRadius(0.5)
+    .onPointClick(point_click_handler);
+*/
+/*
+ * Custom Marker
+ * */
+const markers = new Map();
+const globe = Globe();
+globe(document.getElementById("map"))
+	.globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
+	.backgroundImageUrl("https://unpkg.com/three-globe/example/img/night-sky.png")
+	.htmlLat("lat")
+	.htmlLng("lon")
+	.htmlElement(data => {
+    const id = "marker_id_" + data.city;
+
+    let marker = markers.get(id);
+
+    if (!marker) {
+        marker = document.createElement("div");
+        marker.id = id;
+        marker.className = "marker";
+
+        marker.innerHTML = `
+            <div class="marker-events"></div>
+            <div class="marker-pin"><p>&#128205;</p></div>
+        `;
+/*
+	   marker.addEventListener("click", async (ev) => {
+	await point_click_handler(data, ev);
+    });
+*/
+        markers.set(id, marker);
+    }
+
+    const event = document.createElement("div");
+    event.innerHTML = `
+        <p>
+            <b>
+                <span class="marker-year">${data.year} - </span>
+                <span class="marker-city">${data.city}</span>
+            </b>
+        </p>
+        <p class="marker-title">${data.title}</p>
+    `;
+
+    marker.querySelector(".marker-events").appendChild(event);
+    return marker;
+});
+
+/*
+//DEBUG
+const globe = Globe()(document.getElementById("map"))
+    .globeImageUrl(null)
+    .backgroundColor("#666666")
+    .showAtmosphere(false)
+    .pointLat("lat")
+    .pointLng("lon")
+    .pointLabel("city")
+    .pointAltitude(0.3)
+    .pointRadius(0.5)
+    .onPointClick(point_click_handler);
+*/
+
+// FUNCTIONS
+async function init(){
+	//button pilih tahun
+	choose_year.addEventListener("click", open_year_dialog);
+	dialog_years_cancel.addEventListener("click", () => {dialog_years.close()});
+	dialog_content_cancel.addEventListener("click", () => {dialog_content.close()});
+
+	// All button
+	all_button.addEventListener("click", button_year_handler);
+	dialog_years.appendChild(all_button);
+	
+	// load years
+	const response = await fetch("/api/init");
+	if(!response){
+		console.log("init(): failed to fetch /api/init");
+		return false;
+	}
+	const data = await response.json();
+	if(!response){
+		console.log("init(): failed to load json response");
+		return false;
+	}
+	
+	data.years.forEach(elem => {
+		const button = document.createElement("button");
+		button.className = "button-year";
+		button.textContent = int_masehi(elem);
+		button.addEventListener("click", button_year_handler);
+		dialog_years.appendChild(button);
+	});
+	return true;
+}
+
+function open_year_dialog(ev){
+	const button = ev.target;
+	const title = document.querySelector("#hud h2");
+	title.textContent = button.textContent;
+	dialog_years.showModal();
+}
+
+async function button_year_handler(ev){
+	const button = ev.target;
+	//const markers = document.querySelectorAll(".marker");
+	//markers.forEach(elem => {
+//		elem.remove();
+//	});
+	let endpoint = "/api/get-all-contents";
+	if(button != all_button)
+		endpoint = "/api/locations?year=" + masehi_int(button.textContent);
+	// load locations
+	const response = await fetch( endpoint);
+	if(!response){
+		console.log("button_year_handler(): failed to fetch /api/locations");
+		return false;
+	}
+	const data = await response.json();
+	if(!data){
+		console.log("failed to load locations json");
+		return false;
+	}
+	// update globe point
+	markers.clear();
+	globe.htmlElementsData(data.contents);
+	// add event listener to the points
+	current_year = masehi_int(button.textContent);
+	dialog_years.close();
+	return true;
+}
+
+async function point_click_handler(pt, ev){
+	// fetch contents
+	const button = ev.target;
+	const response = await fetch("/api/contents?year=" + current_year + "&city=" + pt.city);
+	if(!response){
+		console.log("button_year_handler(): failed to fetch /api/contents");
+		return false;
+	}
+	const data = await response.json();
+	if(!data){
+		console.log("failed to load locations json");
+		return false;
+	}
+
+	// foereach content append wrapper+title+content to #content dialog
+	content.innerHTML = "";
+	data.contents.forEach((elem) => {
+		const html = `
+			<div class="container">
+				<h2>${elem.title}</h2>
+				<p>${elem.content}</p>
+			</div>
+			`;
+		content.insertAdjacentHTML("beforeend", html);
+	});
+	// open content dialog
+	dialog_content.showModal();
+}
+
+// HELPERS
+function int_masehi(year) {
+    if (year <= 0) {
+        return `${1 - year} SM`;
+    }
+
+    return `${year} M`;
+}
+
+function masehi_int(str) {
+    str = str.trim().toUpperCase();
+
+    if (str.endsWith("SM")) {
+        return 1 - parseInt(str);
+    }
+
+    if (str.endsWith("M")) {
+        return parseInt(str);
+    }
+
+    return NaN;
+}
+

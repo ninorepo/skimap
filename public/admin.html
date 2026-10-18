@@ -149,7 +149,38 @@
 #content-list .container .row:last-child {
   border-bottom: none;
 }
+/*
+#ai-assitant-display {
+  overflow-x: auto;
+}
 
+#ai-assitant-display table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+#ai-assitant-display th,
+#ai-assitant-display td {
+  border: 1px solid oklch(var(--bc) / 0.2);
+  padding: 0.75rem;
+  vertical-align: top;
+}
+
+#ai-assitant-display th {
+  background: oklch(var(--b2));
+  font-weight: 600;
+}
+*/
+#ai-assistant .modal-box {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  border-radius: 0;
+}
   </style>
 
 </head>
@@ -182,6 +213,12 @@
         class="btn btn-outline">
         <span class="text-lg">+</span>
         Add City
+      </button>
+
+      <button id="ai-assistant-button"
+        class="btn btn-outline">
+        <span class="text-lg">☁</span>
+        AI Assistant
       </button>
     </section>
 
@@ -305,7 +342,53 @@
       </div>
     </div>
   </dialog>
-  <script>
+<!--
+	AI Assistant
+-->
+<!--
+<dialog id="ai-assistant">
+	<div class="container">
+		<button>x</button>
+		<div id="ai-assitant-display"></div>
+		<input type="textarea">
+		<button id="ai-assistant-upload">upload</button>
+		<button id="ai-assistant-ask">☁</button>
+	</div>
+</dialog>
+-->
+<dialog id="ai-assistant" class="modal p-0">
+  <div class="modal-box w-screen h-screen max-w-none max-h-none rounded-none p-4 flex flex-col gap-4">
+
+    <div class="flex items-center justify-between shrink-0">
+      <h3 class="text-lg font-bold">AI Assistant</h3>
+      <button class="btn btn-sm btn-ghost">✕</button>
+    </div>
+
+    <div
+      id="ai-assitant-display"
+      class="flex-1 min-h-0 overflow-auto rounded-lg border border-base-300 p-3"
+    ></div>
+
+    <textarea
+      id="ai-assistant-input"
+      class="textarea textarea-bordered w-full shrink-0"
+      placeholder="Ask something..."
+      rows="3"
+    ></textarea>
+
+    <div class="flex justify-end gap-2 shrink-0">
+      <button id="ai-assistant-upload" class="btn btn-outline">
+        Upload
+      </button>
+
+      <button id="ai-assistant-ask" class="btn btn-primary">
+        ☁
+      </button>
+    </div>
+
+  </div>
+</dialog>
+<script>
 verify();
 async function verify(){
 	const response = await fetch("/api/user/verify");
@@ -318,6 +401,255 @@ async function verify(){
 	const user = json.user;
 	welcome_message.textContent = `Hi ${user.username}, welcome to`;
 }
+async function aiAssistantDialog() {
+  return new Promise((resolve) => {
+    const dialog = document.getElementById("ai-assistant");
+    const displayArea = document.getElementById("ai-assitant-display");
+    const promptInput = dialog.querySelector('input[type="textarea"]') || dialog.querySelector('input, textarea');
+    
+    // Selecting buttons (handling ID differences gracefully)
+    const askButton = document.getElementById("ai-assistant-ask");
+    const uploadButton = document.getElementById("ai-assistant-upload");
+    
+    // Find close button (the first button in dialog or by ID if added)
+    let closeButton = document.getElementById("ai-assistant-close");
+    if (!closeButton) {
+      closeButton = dialog.querySelector("button"); // Fallback to the 'x' button
+    }
+
+    // Variable to keep the original response data intact
+    let historicalData = [];
+
+    // Open the modal dialog
+    dialog.showModal();
+
+    // -------------------------------------------------------------
+    // 1. ASK BUTTON HANDLER
+    // -------------------------------------------------------------
+    askButton.onclick = async () => {
+      const promptText = promptInput.value.trim();
+      if (!promptText) {
+        alert("Harap masukkan prompt terlebih dahulu.");
+        return;
+      }
+
+      askButton.disabled = true;
+      askButton.textContent = "⏳ Processing...";
+      displayArea.innerHTML = "<p>Sedang mengambil data dari AI...</p>";
+
+      try {
+        // Send request to your Cloudflare Worker backend endpoint
+        const response = await fetch("/api/assistant/ask", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt: promptText }),
+        });
+	
+	console.log("Response: ", response);
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        // Store original array response: [{ year, city, title, content, longitude, latitude }, ...]
+        historicalData = await response.json();
+
+        // Render data into display DOM in a clean table format
+        renderTable(historicalData, displayArea);
+
+      } catch (err) {
+        console.error("Failed to query AI Assistant:", err);
+        displayArea.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
+      } finally {
+        askButton.disabled = false;
+        askButton.textContent = "☁";
+      }
+    };
+
+    // -------------------------------------------------------------
+    // 2. UPLOAD BUTTON HANDLER
+    // -------------------------------------------------------------
+    uploadButton.onclick = async () => {
+      if (!historicalData || historicalData.length === 0) {
+        alert("Tidak ada data untuk diunggah. Silakan tanyakan data sejarah terlebih dahulu.");
+        return;
+      }
+
+      uploadButton.disabled = true;
+      uploadButton.textContent = "Uploading...";
+
+      try {
+        // Step A: Extract location data -> array of { city, longitude, latitude }
+        const locationList = historicalData.map((item) => ({
+          city: item.city,
+          longitude: item.longitude,
+          latitude: item.latitude,
+        }));
+
+        // Step B: Send location data element by element sequentially
+        console.log("Starting location uploads...");
+        for (let i = 0; i < locationList.length; i++) {
+          const loc = locationList[i];
+          await fetch("/api/editor/add-city", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(loc),
+          });
+          console.log(`Uploaded location (${i + 1}/${locationList.length}): ${loc.city}`);
+        }
+
+        // Step C: Extract non-location event data -> { year, title, content, city }
+        // (including city as a reference key if needed by your backend)
+        const eventList = historicalData.map((item) => ({
+	  update: "false",
+	  id: null,
+          year: item.year,
+          title: item.title,
+          content: item.content,
+          city: item.city
+        }));
+
+        // Step D: Send event data element by element sequentially to a different endpoint
+        console.log("Starting event uploads...");
+        for (let i = 0; i < eventList.length; i++) {
+          const eventItem = eventList[i];
+          await fetch("/api/editor/edit-history", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(eventItem),
+          });
+          console.log(`Uploaded event (${i + 1}/${eventList.length}): ${eventItem.title}`);
+        }
+
+        alert("Semua data lokasi dan peristiwa berhasil diunggah!");
+
+      } catch (err) {
+        console.error("Upload error:", err);
+        alert(`Gagal mengunggah data: ${err.message}`);
+      } finally {
+        uploadButton.disabled = false;
+        uploadButton.textContent = "upload";
+      }
+    };
+
+    // -------------------------------------------------------------
+    // 3. CLOSE BUTTON HANDLER
+    // -------------------------------------------------------------
+    closeButton.onclick = () => {
+      dialog.close();
+      resolve(true);
+    };
+  });
+}
+
+// -----------------------------------------------------------------
+// Helper Function: Formats year integer according to your specification
+// (>0 = Masehi, <=0 = Sebelum Masehi, 0 = 1 SM)
+// -----------------------------------------------------------------
+function formatYear(yearInt) {
+  if (yearInt > 0) {
+    return `${yearInt} Masehi`;
+  } else if (yearInt === 0) {
+    return `1 Sebelum Masehi`;
+  } else {
+    return `${Math.abs(yearInt)} Sebelum Masehi`;
+  }
+}
+
+// -----------------------------------------------------------------
+// Helper Function: Renders data array into HTML table
+// -----------------------------------------------------------------
+function renderTable(data, container) {
+  if (!Array.isArray(data) || data.length === 0) {
+    container.innerHTML = '<p class="text-base-content/60">Data tidak ditemukan.</p>';
+    return;
+  }
+
+  let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+
+  data.forEach((item) => {
+    html += `
+      <div class="card bg-base-200 shadow-sm">
+        <div class="card-body gap-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="badge badge-primary">${formatYear(item.year)}</span>
+            <span class="text-sm text-base-content/60">
+              ${escapeHtml(item.city)}
+            </span>
+          </div>
+
+          <h3 class="card-title text-base">
+            ${escapeHtml(item.title)}
+          </h3>
+
+          <p class="text-sm whitespace-pre-wrap break-words">
+            ${escapeHtml(item.content)}
+          </p>
+
+          <div class="text-xs text-base-content/60 border-t border-base-300 pt-3">
+            Koordinat: ${item.latitude}, ${item.longitude}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+
+  container.innerHTML = html;
+}
+/*
+function renderTable(data, container) {
+  if (!Array.isArray(data) || data.length === 0) {
+    container.innerHTML = "<p>Data tidak ditemukan.</p>";
+    return;
+  }
+
+  let html = `
+    <table border="1" style="width: 100%; border-collapse: collapse; text-align: left;">
+      <thead>
+        <tr>
+          <th>Tahun</th>
+          <th>Kota</th>
+          <th>Judul</th>
+          <th>Konten</th>
+          <th>Koordinat (Lat, Long)</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  data.forEach((item) => {
+    html += `
+      <tr>
+        <td>${formatYear(item.year)}</td>
+        <td>${escapeHtml(item.city)}</td>
+        <td><strong>${escapeHtml(item.title)}</strong></td>
+        <td>${escapeHtml(item.content)}</td>
+        <td>${item.latitude}, ${item.longitude}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
+}
+*/
+// Helper to escape HTML string safely
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
   </script>
   <script src="https://cdn.jsdelivr.net/npm/hugerte@1/hugerte.min.js"></script>
   <script src="/admin.js"></script>

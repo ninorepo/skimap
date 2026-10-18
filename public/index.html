@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SKI Map</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css">
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
   <style>
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
     }
 
     body {
@@ -30,154 +28,160 @@
       z-index: 0;
     }
 
-    #hud {
+    #prompt {
       position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 10;
-      width: min(320px, calc(100% - 40px));
-      padding: 22px;
-      border: 1px solid rgba(255, 255, 255, .8);
-      border-radius: 18px;
-      background: rgba(255, 255, 255, .92);
+      top: 1rem;
+      left: 1rem;
+      right: 1rem;
+      z-index: 50;
+      display: flex;
+      align-items: flex-end;
+      gap: .5rem;
+      padding: .5rem;
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 1rem;
+      background: rgba(255,255,255,.88);
       backdrop-filter: blur(16px);
-      box-shadow: 0 8px 32px rgba(15, 23, 42, .10);
+      box-shadow: 0 8px 32px rgba(15,23,42,.12);
     }
 
-    #hud h1 {
-      font-size: 1.5rem;
-      font-weight: 800;
-      letter-spacing: -.04em;
+    #prompt-input {
+      flex: 1;
+      min-width: 0;
+      height: 2.5rem;
+      min-height: 2.5rem;
+      resize: vertical;
+      background: white;
+      border-color: #e2e8f0;
     }
 
-    #hud h2 {
-      margin-top: 5px;
-      margin-bottom: 18px;
-      font-size: .875rem;
-      font-weight: 400;
-      color: #64748b;
+    #ask {
+      flex-shrink: 0;
     }
 
-    #choose-year {
-      width: 100%;
+    #menu {
+      position: fixed;
+      z-index: 40;
+      top: 5.5rem;
+      right: 1rem;
+      display: flex;
+      gap: .5rem;
+      padding: .5rem;
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 1rem;
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 24px rgba(15,23,42,.1);
     }
 
     dialog {
-      position: fixed;
-      inset: 0;
-      margin: auto;
-      width: calc(100% - 32px);
-      max-width: 480px;
+      width: calc(100% - 2rem);
+      max-width: 40rem;
       max-height: 85vh;
-      padding: 24px;
+      margin: auto;
+      padding: 0;
       overflow: auto;
       border: 1px solid #e2e8f0;
-      border-radius: 20px;
+      border-radius: 1.25rem;
       background: white;
       color: #1e293b;
-      box-shadow: 0 24px 64px rgba(15, 23, 42, .2);
+      box-shadow: 0 24px 64px rgba(15,23,42,.2);
     }
 
     dialog::backdrop {
-      background: rgba(15, 23, 42, .45);
+      background: rgba(15,23,42,.5);
       backdrop-filter: blur(4px);
     }
 
-    #dialog-years-cancel,
-    #dialog-content-close {
-      display: grid;
-      place-items: center;
-      width: 36px;
-      height: 36px;
-      border: none;
-      border-radius: 10px;
-      background: #f1f5f9;
-      color: #475569;
-      font-size: 1.2rem;
-      cursor: pointer;
+    dialog .container {
+      padding: 1.5rem;
     }
 
-    #dialog-years-cancel:hover,
-    #dialog-content-close:hover {
-      background: #e2e8f0;
+    #read-more h1 {
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      font-weight: 800;
     }
 
-    #dialog-years-cancel {
-      margin-left: auto;
-    }
-
-    #dialog-years {
-      max-width: 380px;
-    }
-
-    #dialog-years h3 {
-      margin-bottom: 18px;
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
-
-    #dialog-content {
-      z-index: 20;
-    }
-
-    #dialog-content .navigation {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 16px;
-    }
-
-    #dialog-years button {
-  padding: 10px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #f8fafc;
-  color: #334155;
-  font-weight: 600;
-  cursor: pointer;
-  transition: .15s ease;
-}
-
-#dialog-years button:hover {
-  background: #eef2ff;
-  border-color: #818cf8;
-  color: #4f46e5;
-}
-
-#dialog-years button:active {
-  background: #4f46e5;
-  color: white;
-}
-
-    #content {
+    #read-more .content {
       line-height: 1.75;
       overflow-wrap: anywhere;
     }
 
-    #content h1,
-    #content h2,
-    #content h3 {
-      margin: 16px 0 8px;
+    #read-more .content h1,
+    #read-more .content h2,
+    #read-more .content h3 {
+      margin: 1rem 0 .5rem;
       line-height: 1.3;
     }
 
-    #content p {
-      margin-bottom: 12px;
+    #read-more .content p {
+      margin-bottom: .75rem;
+    }
+
+    #read-more .container > button {
+      display: block;
+      margin-top: 1.5rem;
+      margin-left: auto;
+    }
+
+    #yes-no .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: .5rem;
+      margin-top: 1.5rem;
+    }
+
+    .marker {
+      background: transparent !important;
+      color: white;
+      font-size: .6rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    .marker > div {
+      display: block;
+      padding: .4rem;
+      background: rgba(0,0,0,.7);
+      border-radius: .4rem;
+    }
+
+    .marker-pin {
+      background: transparent !important;
+      padding: 0;
+      margin: 0;
+    }
+
+    .marker-pin p {
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .marker-events,
+    .marker-events * {
+      pointer-events: auto;
+      cursor: pointer;
     }
 
     @media (max-width: 480px) {
-      #hud {
-        top: 12px;
-        left: 12px;
-        width: calc(100% - 24px);
-        padding: 18px;
+      #prompt {
+        top: .75rem;
+        left: .75rem;
+        right: .75rem;
       }
 
-      #hud h1 {
-        font-size: 1.3rem;
+      #ask {
+        padding-inline: .8rem;
       }
 
-      dialog {
-        padding: 20px;
+      #menu {
+        top: 5rem;
+        right: .75rem;
+      }
+
+      dialog .container {
+        padding: 1.25rem;
       }
     }
   </style>
@@ -189,39 +193,85 @@
   <main>
     <div id="map"></div>
 
-    <section id="hud">
-      <h1>SKI Map</h1>
-      <h2></h2>
+    <section id="prompt">
+      <textarea
+        id="prompt-input"
+        class="textarea textarea-bordered"
+        rows="1"
+        placeholder="Petakan sejarah..."
+      ></textarea>
 
-      <button id="choose-year" class="btn btn-primary">
-        Pilih Tahun
+      <button id="ask" class="btn btn-primary" title="Ask AI">
+        Jalankan
+      </button>
+    </section>
+
+    <section id="menu" style="display:none;">
+      <button id="save" class="btn btn-primary btn-sm">
+        Simpan
+      </button>
+      <button id="load" class="btn btn-outline btn-sm">
+        Buka
       </button>
     </section>
   </main>
 
   <footer></footer>
 
-  <dialog id="dialog-years">
-    <div class="flex items-center justify-between mb-5">
-      <h3 class="text-xl font-bold">Pilih Tahun</h3>
-      <button id="dialog-years-cancel" type="button"
-        aria-label="Close">×</button>
+  <dialog id="read-more">
+    <div class="container">
+      <h1></h1>
+      <div class="content"></div>
+      <button class="btn btn-primary">Tutup</button>
     </div>
-
-    <!-- Your year-selection elements can be inserted here. -->
   </dialog>
 
-  <dialog id="dialog-content">
-    <div class="navigation">
-      <button id="dialog-content-close" type="button"
-        aria-label="Close">×</button>
-    </div>
+  <!-- Storage list dialog -->
+  <dialog id="storage-dialog">
+    <div class="container">
+      <div class="flex items-center justify-between gap-4 mb-4">
+        <h2 class="text-xl font-bold">Data Tersimpan</h2>
+        <button class="btn btn-ghost btn-sm" data-close-dialog="storage-dialog">✕</button>
+      </div>
 
-    <div id="content"></div>
+      <!-- Render saved files here -->
+      <div id="storage-list" class="flex flex-col gap-3"></div>
+    </div>
   </dialog>
+
+  <dialog id="view">
+    <div class="container">
+      <div class="flex items-center justify-between gap-4 mb-4">
+        <h2 class="text-xl font-bold">Detail Data</h2>
+        <button class="btn btn-ghost btn-sm" data-close-dialog="view">✕</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="confirm-dialog">
+    <div id="yes-no" class="container">
+      <h4 class="text-lg font-bold"></h4>
+      <div class="actions">
+        <button id="no" class="btn btn-ghost">Tidak</button>
+        <button id="yes" class="btn btn-error">Ya</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    document.querySelector('#read-more .container > button')
+      .addEventListener('click', () => {
+        document.getElementById('read-more').close();
+      });
+
+    document.querySelectorAll('[data-close-dialog]').forEach(button => {
+      button.addEventListener('click', () => {
+        document.getElementById(button.dataset.closeDialog).close();
+      });
+    });
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.46.2/dist/globe.gl.min.js"></script>
   <script src="/index.js"></script>
 </body>
 </html>
-

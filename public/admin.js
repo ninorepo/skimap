@@ -7,6 +7,7 @@ const add_city_button = document.getElementById("add-city-button");
 const editor_dialog = document.getElementById("editor-dialog");
 const cancel_editor = document.getElementById("cancel-editor");
 const city_select = document.querySelector("#editor-form select");
+const ai_assistant_button = document.getElementById("ai-assistant-button");
 
 // GLOBALS EDITOR FORM
 const form = document.querySelector("#editor-form");
@@ -84,6 +85,11 @@ async function init(){
 	// init add city button
 	add_city_button.addEventListener("click", () => {
 		formAddCity.showModal();
+	});
+
+	// init AI Assistant button
+	ai_assistant_button.addEventListener("click", async () => {
+		await aiAssistantDialog();
 	});
 
 	// init cancel add city
@@ -196,7 +202,6 @@ async function draw_table(histories){
 			<span>Year</span>
 			<span>City</span>
 			<span>Title</span>
-			<span>Content</span>
 			<span>Modified</span>
 			<span>Edit</span>
 			<span>Delete</span>
@@ -208,7 +213,7 @@ async function draw_table(histories){
 		const year = document.createElement("span");
 		const city = document.createElement("span");
 		const title = document.createElement("span");
-		const content = document.createElement("span");
+		//const content = document.createElement("span");
 		const modified_time = document.createElement("span");
 		const edit = document.createElement("button");
 		const delete_button = document.createElement("button");
@@ -218,7 +223,7 @@ async function draw_table(histories){
 		year.textContent = (elem.year > 0) ? (elem.year + " M") : (Math.abs(elem.year) + 1) + " SM";
 		city.textContent = elem.city;
 		title.textContent = elem.title;
-		content.textContent = elem.content.substring(0, 30) + "...";
+		//content.textContent = elem.content.substring(0, 30) + "...";
 		modified_time.textContent = "modified time";
 		edit.textContent = "edit";
 		edit.classList.add("btn", "btn-secondary");
@@ -268,7 +273,7 @@ async function draw_table(histories){
 		wrapper.appendChild(year);
 		wrapper.appendChild(city);
 		wrapper.appendChild(title);
-		wrapper.appendChild(content);
+		//wrapper.appendChild(content);
 		wrapper.appendChild(modified_time);
 		wrapper.appendChild(edit);
 		wrapper.appendChild(delete_button);
