@@ -168,6 +168,121 @@
       cursor: pointer;
     }
 
+  /* Article content: raw CSS */
+  .content {
+    line-height: 1.8;
+    color: var(--color-base-content);
+  }
+
+  .content p {
+    margin: 0 0 1rem;
+  }
+
+  .content img {
+    display: block;
+    width: 100%;
+    max-height: 480px;
+    object-fit: contain;
+    margin: 1.5rem auto;
+    border-radius: 0.75rem;
+  }
+
+  .content a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+  }
+
+  /* Quiz: raw CSS */
+  .quiz {
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border: 1px solid var(--color-base-300);
+    border-radius: 1rem;
+    background: var(--color-base-200);
+  }
+
+  .quiz-progress {
+    font-size: 0.875rem;
+    color: var(--color-base-content);
+    opacity: 0.65;
+    margin: 0 0 0.75rem;
+  }
+
+  .quiz h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 0 0 1.25rem;
+  }
+
+  .quiz button {
+	border: 1px solid black;
+	margin: 2rem;
+	padding: 1rem;
+	border-radius: 0.5rem;
+  }
+
+  .quiz button:hover {
+	opacity: 0.7;
+  }
+
+  .quiz-options {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .quiz-options label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--color-base-300);
+    border-radius: 0.75rem;
+    cursor: pointer;
+    background: var(--color-base-100);
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .quiz-options label:has(input:checked) {
+    border-color: var(--color-primary);
+    background: color-mix(
+      in srgb,
+      var(--color-primary) 10%,
+      var(--color-base-100)
+    );
+  }
+
+  .quiz-options label:hover {
+    border-color: var(--color-primary);
+  }
+
+  .quiz-options input {
+    flex-shrink: 0;
+  }
+
+  /* Dialog sizing */
+  #read-more .modal-box {
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+
+  @media (max-width: 640px) {
+    #read-more .modal-box {
+      width: 100%;
+      max-width: none;
+      max-height: 100dvh;
+      border-radius: 0;
+      padding: 1.25rem;
+    }
+
+    .quiz {
+      padding: 1rem;
+    }
+  }
+
+
     @media (max-width: 480px) {
       #prompt {
         top: .75rem;
@@ -222,6 +337,30 @@
 
   <footer></footer>
 
+
+<dialog id="read-more">
+  <div class="p-10 w-full max-w-4xl flex flex-col gap-4">
+      <h1 class="text-3xl text-center font-bold mb-4">
+      </h1>
+
+      <div class="content"></div>
+
+      <div class="divider"></div>
+
+      <h2 class="text-2xl font-bold text-center">QUIZ</h2>
+      <p class="text-base-content/70 text-center">Uji pemahaman Anda</p>
+
+      <div class="quiz"></div>
+
+      <div class="flex justify-end">
+        <button class="btn btn-ghost">
+          Tutup
+        </button>
+      </div>
+  </div>
+</dialog>
+
+<!--
   <dialog id="read-more">
     <div class="container">
       <h1></h1>
@@ -232,7 +371,7 @@
       <button class="btn btn-primary">Tutup</button>
     </div>
   </dialog>
-
+-->
   <!-- Storage list dialog -->
   <dialog id="storage-dialog">
     <div class="container">
