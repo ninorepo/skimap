@@ -107,18 +107,124 @@ ${prompt}
 
 Aturan:
 - Semua teks harus dalam Bahasa Indonesia.
-- year adalah string menggunkanan M untuk masehi dan SM untuk sebelum masehi tidak boleh negative atau nol
+- year adalah string dengan format tahun Masehi menggunakan akhiran "M" atau tahun Sebelum Masehi menggunakan akhiran "SM". Contoh: "1945 M", "350 SM". Jangan gunakan tahun negatif atau nol.
 - city berisi nama kota atau lokasi utama peristiwa.
-- title adalah judul singkat peristiwa.
-- content menjelaskan peristiwa secara faktual 3 sampai 5 paragraf. mendukung html tag: p, br, b, i, img, a. tambahkan gambar dari internet. sertakan link referensi web berbahasa indonesia, harus buka tab baru.
-- longitude dan latitude adalah koordinat geografis lokasi.
-- Jangan mengarang fakta sejarah atau koordinat jika tidak diketahui.
-- Jika lokasi tepat tidak diketahui, gunakan koordinat perkiraan kota atau lokasi utama yang paling relevan.
-- Urutkan hasil berdasarkan year dari terkecil ke terbesar.
-- Kembalikan array kosong jika tidak ada peristiwa relevan.
-        `,
+- title adalah judul singkat dan deskriptif tentang peristiwa.
+- content menjelaskan peristiwa secara faktual dalam 3 sampai 5 paragraf. Gunakan HTML yang valid dan hanya tag berikut: p, br, b, i, img, dan a.
+- Tambahkan gambar relevan dari internet menggunakan tag img dengan URL gambar yang valid. Jangan mengarang URL gambar. wajib menyertakan gambar pada tiap content.
+- Sertakan tautan referensi web berbahasa Indonesia yang relevan dan dapat dipercaya. Gunakan tag a dengan atribut target="_blank" agar tautan dibuka di tab baru. Jangan mengarang URL referensi.
+- longitude dan latitude adalah koordinat geografis lokasi peristiwa, masing-masing berupa angka.
+- Jangan mengarang fakta sejarah, koordinat, gambar, atau sumber referensi. Jika lokasi tepat tidak diketahui, gunakan koordinat perkiraan kota atau lokasi utama yang paling relevan.
+- Urutkan semua peristiwa berdasarkan year dari yang paling lama ke yang paling baru. Tahun SM harus ditempatkan sebelum tahun Masehi, dengan tahun SM yang lebih besar secara numerik ditempatkan lebih dahulu.
+- Setiap peristiwa wajib memiliki properti quiz berupa array berisi 3 sampai 5 soal pilihan ganda yang menguji pemahaman terhadap peristiwa tersebut.
+- Setiap soal dalam quiz harus memiliki:
+  - question: pertanyaan yang jelas dalam Bahasa Indonesia.
+  - options: array berisi tepat 4 pilihan jawaban dalam Bahasa Indonesia, dengan hanya satu jawaban yang benar.
+  - correct: indeks berbasis nol dari jawaban yang benar, berupa integer dari 0 sampai 3.
+- Buat pertanyaan berdasarkan fakta yang dijelaskan dalam peristiwa terkait. Hindari pertanyaan ambigu, pilihan jawaban duplikat, dan informasi yang tidak didukung sumber. Variasikan pertanyaan agar mencakup penyebab, tokoh, kronologi, lokasi, atau dampak peristiwa jika relevan.
+- Pastikan nilai correct benar-benar menunjuk pada pilihan yang tepat dalam options.
+- Kembalikan array events kosong jika tidak ada peristiwa relevan. Jangan menghasilkan peristiwa atau soal kuis yang tidak relevan dengan permintaan.
+
+Aturan gambar:
+- Gunakan gambar yang benar-benar ada dan relevan dengan peristiwa sejarah.
+- Jangan membuat, menebak, atau mengarang URL gambar berdasarkan nama file, judul, atau pola URL.
+- Prioritaskan gambar dari Wikimedia Commons atau Wikipedia.
+- Gunakan URL gambar langsung yang mengarah ke file gambar, bukan URL halaman artikel atau halaman galeri.
+- Jika tidak dapat memastikan URL gambar yang valid, jangan sertakan gambar. Jangan menggantinya dengan URL hasil tebakan.
+- Masukkan gambar ke dalam content menggunakan tag img dengan atribut src berisi URL gambar dan alt berisi deskripsi gambar.
+- Jangan mengklaim bahwa gambar telah diverifikasi jika URL-nya belum benar-benar diperiksa.
+`,
         input: prompt,
-        text: {
+text: {
+  format: {
+    type: "json_schema",
+    name: "history_data",
+    strict: true,
+    schema: {
+      type: "object",
+      properties: {
+        events: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              year: { type: "string" },
+              city: { type: "string" },
+              title: { type: "string" },
+              content: { type: "string" },
+              longitude: { type: "number" },
+              latitude: { type: "number" },
+              quiz: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    question: { type: "string" },
+                    options: {
+                      type: "array",
+                      items: { type: "string" }
+                    },
+                    correct: { type: "integer" }
+                  },
+                  required: [
+                    "question",
+                    "options",
+                    "correct"
+                  ],
+                  additionalProperties: false
+                }
+              }
+            },
+            required: [
+              "year",
+              "city",
+              "title",
+              "content",
+              "longitude",
+              "latitude",
+              "quiz"
+            ],
+            additionalProperties: false
+          }
+        }
+      },
+      required: ["events"],
+      additionalProperties: false
+    }
+  }
+}
+      })
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `OpenAI API error: ${response.status} ${await response.text()}`
+    );
+  }
+
+  const data = await response.json();
+
+  if (data.status !== "completed") {
+    throw new Error("OpenAI response was not completed");
+  }
+
+  const result = data.output
+    .find(item => item.type === "message")
+    ?.content.find(item => item.type === "output_text")
+    ?.text;
+
+  if (!result) {
+    throw new Error("OpenAI returned no history data");
+  }
+
+  const parsed = JSON.parse(result);
+
+  return new Response(JSON.stringify(parsed.events), {status: 200});
+}
+
+/*
+         text: {
           format: {
             type: "json_schema",
             name: "history_data",
@@ -155,32 +261,4 @@ Aturan:
             }
           }
         }
-      })
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      `OpenAI API error: ${response.status} ${await response.text()}`
-    );
-  }
-
-  const data = await response.json();
-
-  if (data.status !== "completed") {
-    throw new Error("OpenAI response was not completed");
-  }
-
-  const result = data.output
-    .find(item => item.type === "message")
-    ?.content.find(item => item.type === "output_text")
-    ?.text;
-
-  if (!result) {
-    throw new Error("OpenAI returned no history data");
-  }
-
-  const parsed = JSON.parse(result);
-
-  return new Response(JSON.stringify(parsed.events), {status: 200});
-}
+ * */

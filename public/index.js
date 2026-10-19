@@ -12,7 +12,7 @@ loading: async function (elem, func)
 	});
 },
 
-read_more: function (title, content)
+read_more: function (title, content, quiz_data)
 {
 	return new Promise(resolve =>
 	{
@@ -20,8 +20,11 @@ read_more: function (title, content)
 		const h1 = document.querySelector("#read-more h1");
 		const div = document.querySelector("#read-more .content");
 		const close = document.querySelector("#read-more button");
+		const quiz_container = document.querySelector(".quiz");
+
 		h1.textContent = title;
 		div.innerHTML = content;
+		quiz(quiz_container, quiz_data);
 		dialog.showModal();
 		close.onclick = () =>
 		{
@@ -73,7 +76,7 @@ const world = globe(document.getElementById("map")).globeImageUrl("https://unpkg
 		{
 			e.stopPropagation();
 			console.log("click: ", e);
-			await UI.read_more(data.title, data.content);
+			await UI.read_more(data.title, data.content, data.quiz);
 		});
 		marker.element.querySelector(".marker-events").appendChild(event);
 		updateArcs();
@@ -148,8 +151,15 @@ function init_prompt(globe)
 			const data = await response.json();
 			gpt_response = structuredClone(data);
 			console.log("prompt events: ", data);
+			// clean markers to pervent redundant
 			markers.clear();
-			globe.htmlElementsData(data);
+			// reload data and auto focus
+			globe.htmlElementsData(data).pointOfView({
+				lat: gpt_response[0].latitude,
+				lng: gpt_response[0].longitude,
+				altitude: 1.5
+			},
+			1000);
 			console.log("markers :", markers);
 		});
 	});

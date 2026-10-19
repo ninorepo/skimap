@@ -226,6 +226,9 @@
     <div class="container">
       <h1></h1>
       <div class="content"></div>
+      <h2>QUIZ</h2>
+      <p>Uji pemahaman Anda</p>
+      <div class="quiz"></div>
       <button class="btn btn-primary">Tutup</button>
     </div>
   </dialog>
@@ -263,10 +266,10 @@
   </dialog>
 
   <script>
-    document.querySelector('#read-more .container > button')
-      .addEventListener('click', () => {
-        document.getElementById('read-more').close();
-      });
+    //document.querySelector('#read-more .container > button')
+    //  .addEventListener('click', () => {
+    //    document.getElementById('read-more').close();
+    //  });
 
     document.querySelectorAll('[data-close-dialog]').forEach(button => {
       button.addEventListener('click', () => {
@@ -276,6 +279,7 @@
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.46.2/dist/globe.gl.min.js"></script>
-  <script src="/index.js"></script>
+  <script src="index.js"></script>
+  <script src="quiz.js"></script>
 </body>
 </html>
