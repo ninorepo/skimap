@@ -90,6 +90,117 @@ export async function google_auth(req, env){
 
 export async function assistant_ask(req, env) {
   const post = await POST(req);
+
+  const response = await fetch(
+    "https://api.koboillm.com/v1/responses",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.GPT_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-6-luna",
+
+        instructions: `
+Gunakan Bahasa Indonesia. Jangan mengarang fakta sejarah, tokoh, koordinat, bukti, atau URL.
+
+Kembalikan JSON dengan format:
+{
+  "events": [
+    {
+      "year": "1945 M",
+      "city": "Jakarta",
+      "title": "Proklamasi Kemerdekaan Indonesia",
+      "content": "<p>Deskripsi peristiwa...</p>",
+      "longitude": 106.8456,
+      "latitude": -6.2088,
+      "categories": ["Politik"],
+      "figures": ["Soekarno", "Mohammad Hatta"],
+      "impact": "Indonesia memproklamasikan kemerdekaannya.",
+      "evidences": ["Naskah Proklamasi"],
+      "quiz": [
+        {
+          "question": "Siapa yang membacakan Proklamasi?",
+          "options": [
+            "Soekarno",
+            "Soeharto",
+            "B. J. Habibie",
+            "Sutan Sjahrir"
+          ],
+          "correct": 0
+        }
+      ]
+    }
+  ]
+}
+
+Aturan:
+- year berakhiran "M" atau "SM".
+- Urutkan dari peristiwa tertua ke terbaru.
+- content berisi 3–5 paragraf HTML.
+- Gunakan hanya tag p, br, b, i, img, dan a.
+- Gunakan URL gambar dan sumber hanya jika yakin benar.
+- Koordinat harus berupa angka; perkiraan diperbolehkan.
+- evidences berisi bukti sejarah konkret, bukan URL.
+- Setiap peristiwa memiliki 3–5 soal kuis.
+- Setiap soal memiliki 4 pilihan dan satu jawaban benar.
+- correct adalah indeks jawaban benar, mulai dari 0.
+- Gunakan [] jika data tidak diketahui.
+- Jika tidak ada peristiwa relevan, kembalikan {"events":[]}.
+- Keluarkan JSON saja, tanpa Markdown atau teks tambahan.
+        `,
+
+        input: post.prompt,
+        text: {
+          format: { type: "text" }
+        }
+      })
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `AI error: ${response.status} ${await response.text()}`
+    );
+  }
+
+  const data = await response.json();
+
+  if (data.status !== "completed") {
+    throw new Error("AI response was not completed");
+  }
+
+  const result = data.output
+    .find(item => item.type === "message")
+    ?.content.find(item => item.type === "output_text")
+    ?.text;
+
+  if (!result) {
+    throw new Error("AI returned no history data");
+  }
+
+  let parsed;
+
+  try {
+    parsed = JSON.parse(result);
+  } catch {
+    throw new Error("AI returned invalid JSON");
+  }
+
+  return new Response(
+    JSON.stringify(parsed.events || []),
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }
+  );
+}
+/*
+export async function assistant_ask(req, env) {
+  const post = await POST(req);
   const prompt = post.prompt;
 
   const response = await fetch(
@@ -103,38 +214,197 @@ export async function assistant_ask(req, env) {
       body: JSON.stringify({
         model: "openai/gpt-6-luna",
         instructions: `
-${prompt}
-
 Aturan:
-- Semua teks harus dalam Bahasa Indonesia.
-- year adalah string dengan format tahun Masehi menggunakan akhiran "M" atau tahun Sebelum Masehi menggunakan akhiran "SM". Contoh: "1945 M", "350 SM". Jangan gunakan tahun negatif atau nol.
-- city berisi nama kota atau lokasi utama peristiwa.
-- title adalah judul singkat dan deskriptif tentang peristiwa.
-- content menjelaskan peristiwa secara faktual dalam 3 sampai 5 paragraf. Gunakan HTML yang valid dan hanya tag berikut: p, br, b, i, img, dan a.
-- Tambahkan gambar relevan dari internet menggunakan tag img dengan URL gambar yang valid. Jangan mengarang URL gambar. wajib menyertakan gambar pada tiap content.
-- Sertakan tautan referensi web berbahasa Indonesia yang relevan dan dapat dipercaya. Gunakan tag a dengan atribut target="_blank" agar tautan dibuka di tab baru. Jangan mengarang URL referensi.
-- longitude dan latitude adalah koordinat geografis lokasi peristiwa, masing-masing berupa angka.
-- Jangan mengarang fakta sejarah, koordinat, gambar, atau sumber referensi. Jika lokasi tepat tidak diketahui, gunakan koordinat perkiraan kota atau lokasi utama yang paling relevan.
-- Urutkan semua peristiwa berdasarkan year dari yang paling lama ke yang paling baru. Tahun SM harus ditempatkan sebelum tahun Masehi, dengan tahun SM yang lebih besar secara numerik ditempatkan lebih dahulu.
-- Setiap peristiwa wajib memiliki properti quiz berupa array berisi 3 sampai 5 soal pilihan ganda yang menguji pemahaman terhadap peristiwa tersebut.
-- Setiap soal dalam quiz harus memiliki:
-  - question: pertanyaan yang jelas dalam Bahasa Indonesia.
-  - options: array berisi tepat 4 pilihan jawaban dalam Bahasa Indonesia, dengan hanya satu jawaban yang benar.
-  - correct: indeks berbasis nol dari jawaban yang benar, berupa integer dari 0 sampai 3.
-- Buat pertanyaan berdasarkan fakta yang dijelaskan dalam peristiwa terkait. Hindari pertanyaan ambigu, pilihan jawaban duplikat, dan informasi yang tidak didukung sumber. Variasikan pertanyaan agar mencakup penyebab, tokoh, kronologi, lokasi, atau dampak peristiwa jika relevan.
-- Pastikan nilai correct benar-benar menunjuk pada pilihan yang tepat dalam options.
-- Kembalikan array events kosong jika tidak ada peristiwa relevan. Jangan menghasilkan peristiwa atau soal kuis yang tidak relevan dengan permintaan.
+- Gunakan Bahasa Indonesia.
+- Jangan mengarang fakta, tokoh, koordinat, bukti, atau URL.
+- Keluarkan hanya JSON valid sesuai skema.
+- Jika tidak ada peristiwa relevan, kembalikan {"events": []}.
 
-Aturan gambar:
-- Gunakan gambar yang benar-benar ada dan relevan dengan peristiwa sejarah.
-- Jangan membuat, menebak, atau mengarang URL gambar berdasarkan nama file, judul, atau pola URL.
-- Prioritaskan gambar dari Wikimedia Commons atau Wikipedia.
-- Gunakan URL gambar langsung yang mengarah ke file gambar, bukan URL halaman artikel atau halaman galeri.
-- Jika tidak dapat memastikan URL gambar yang valid, jangan sertakan gambar. Jangan menggantinya dengan URL hasil tebakan.
-- Masukkan gambar ke dalam content menggunakan tag img dengan atribut src berisi URL gambar dan alt berisi deskripsi gambar.
-- Jangan mengklaim bahwa gambar telah diverifikasi jika URL-nya belum benar-benar diperiksa.
+Peristiwa:
+- year: string berakhiran "M" atau "SM", contoh "1945 M", "350 SM".
+- city: lokasi utama.
+- title: judul singkat.
+- content: 3–5 paragraf faktual dalam HTML. Hanya gunakan tag p, br, b, i, img, a.
+- longitude, latitude: koordinat angka; gunakan perkiraan jika perlu.
+- categories: kategori peristiwa.
+- figures: tokoh penting.
+- impact: dampak utama secara singkat.
+- evidences: bukti sejarah konkret; gunakan [] jika tidak diketahui.
+
+Gambar dan sumber:
+- Tambahkan gambar dengan img dan referensi dengan a hanya jika URL dapat dipastikan benar.
+- Prioritaskan Wikimedia Commons dan Wikipedia.
+- Jangan menebak URL atau mengklaim telah memverifikasinya.
+- Jangan gunakan URL dalam evidences.
+
+Urutan:
+- Urutkan events dari tertua ke terbaru.
+- Tahun SM mendahului M; angka SM lebih besar berarti lebih tua.
+
+Kuis:
+- Setiap peristiwa memiliki 3–5 soal.
+- Setiap soal memiliki question, options (tepat 4 string), dan correct (integer 0–3).
+- Setiap soal hanya memiliki satu jawaban benar.
+- Gunakan fakta yang dapat dipercaya; hindari pertanyaan ambigu dan pilihan duplikat.
+
+Pemeriksaan:
+- Semua properti wajib harus sesuai skema dan tipenya.
+- Jangan menambahkan properti lain.
+- Gunakan [] untuk array tanpa data yang dapat dipastikan.
+- Pastikan HTML valid, koordinat berupa angka, dan urutan kronologis benar.
+- Keluarkan JSON saja, tanpa Markdown atau teks tambahan.
+
 `,
         input: prompt,
+text: {
+  format: {
+    type: "json_schema",
+    name: "history_data",
+    strict: true,
+    schema: {
+      type: "object",
+      properties: {
+        events: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              year: { type: "string" },
+              city: { type: "string" },
+              title: { type: "string" },
+              content: { type: "string" },
+              longitude: { type: "number" },
+              latitude: { type: "number" },
+
+              categories: {
+                type: "array",
+                items: { type: "string" }
+              },
+              figures: {
+                type: "array",
+                items: { type: "string" }
+              },
+              impact: { type: "string" },
+              evidences: {
+                type: "array",
+                items: { type: "string" }
+              },
+
+              quiz: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    question: { type: "string" },
+                    options: {
+                      type: "array",
+                      items: { type: "string" }
+                    },
+                    correct: { type: "integer" }
+                  },
+                  required: [
+                    "question",
+                    "options",
+                    "correct"
+                  ],
+                  additionalProperties: false
+                }
+              }
+            },
+            required: [
+              "year",
+              "city",
+              "title",
+              "content",
+              "longitude",
+              "latitude",
+              "categories",
+              "figures",
+              "impact",
+              "evidences",
+              "quiz"
+            ],
+            additionalProperties: false
+          }
+        }
+      },
+      required: ["events"],
+      additionalProperties: false
+    }
+  }
+}
+      })
+    }
+  );
+
+console.log("AI Error: ", response);
+  if (!response.ok) {
+    throw new Error(
+      `OpenAI API error: ${response.status} ${await response.text()}`
+    );
+  }
+
+  const data = await response.json();
+
+  if (data.status !== "completed") {
+    throw new Error("OpenAI response was not completed");
+  }
+
+  const result = data.output
+    .find(item => item.type === "message")
+    ?.content.find(item => item.type === "output_text")
+    ?.text;
+
+  if (!result) {
+    throw new Error("OpenAI returned no history data");
+  }
+
+  const parsed = JSON.parse(result);
+
+  return new Response(JSON.stringify(parsed.events), {status: 200});
+}
+*/
+/*
+
+Aturan:
+- Semua teks harus menggunakan Bahasa Indonesia.
+- Jangan mengarang fakta, tokoh, koordinat, URL gambar, atau sumber referensi.
+- Kembalikan {"events": []} jika tidak ada peristiwa yang relevan dengan permintaan.
+
+Properti peristiwa:
+- year: tahun sebagai string, gunakan akhiran "M" atau "SM", contoh "1945 M" atau "350 SM". Jangan gunakan tahun negatif atau nol.
+- city: nama kota atau lokasi utama peristiwa.
+- title: judul singkat dan deskriptif.
+- content: penjelasan faktual dalam 3–5 paragraf menggunakan HTML valid. Hanya gunakan tag p, br, b, i, img, dan a.
+- longitude dan latitude: koordinat geografis berupa angka. Jika lokasi tepat tidak diketahui, gunakan perkiraan lokasi utama yang relevan.
+- categories: array kategori relevan, misalnya "Politik", "Perang", "Sains", atau "Budaya".
+- figures: array nama tokoh penting yang terlibat dalam peristiwa.
+- impact: string singkat tentang dampak utama dan konsekuensi jangka panjang jika relevan.
+- evidences: array URL sumber tepercaya yang mendukung fakta peristiwa. Prioritaskan sumber berbahasa Indonesia, arsip, dokumen primer, museum, jurnal ilmiah, dan lembaga resmi.
+
+Gambar dan sumber:
+- Sertakan gambar relevan dalam content menggunakan <img src="URL" alt="deskripsi"> jika URL langsung gambar dapat dipastikan valid.
+- Prioritaskan Wikimedia Commons atau Wikipedia. Jangan menebak URL atau menggunakan URL halaman artikel sebagai URL gambar.
+- Sertakan tautan referensi relevan dalam content menggunakan <a href="URL" target="_blank">nama sumber</a>.
+- Jangan mengarang atau mengklaim telah memverifikasi URL yang belum diperiksa. Jika gambar atau sumber tidak dapat dipastikan, jangan sertakan URL tersebut. Gunakan array evidences kosong jika tidak ada sumber yang dapat dipastikan.
+
+Urutan:
+- Urutkan events dari peristiwa tertua ke terbaru.
+- Tahun SM mendahului tahun Masehi. Di antara tahun SM, angka yang lebih besar ditempatkan lebih dahulu.
+
+Kuis:
+- Setiap peristiwa wajib memiliki quiz berupa array berisi 3–5 soal pilihan ganda.
+- Setiap soal memiliki question (string), options (array tepat 4 string), dan correct (integer 0–3).
+- Setiap soal hanya memiliki satu jawaban benar. Pastikan correct menunjuk pada indeks jawaban yang benar.
+- Pertanyaan harus berdasarkan fakta yang didukung sumber. Variasikan topik seperti penyebab, tokoh, kronologi, lokasi, dan dampak jika relevan.
+- Hindari pertanyaan ambigu, pilihan duplikat, dan informasi yang tidak didukung sumber.
+
+Pemeriksaan akhir:
+- Ikuti skema JSON secara ketat. Semua properti wajib harus tersedia dan bertipe benar.
+- Gunakan array kosong untuk categories, figures, atau evidences jika tidak ada data yang dapat dipastikan.
+- Pastikan HTML valid, koordinat berupa angka, urutan kronologis benar, dan tidak ada properti tambahan.
+- Keluarkan hanya JSON yang sesuai skema, tanpa teks tambahan.
+
 text: {
   format: {
     type: "json_schema",
@@ -193,72 +463,5 @@ text: {
     }
   }
 }
-      })
-    }
-  );
+*/
 
-  if (!response.ok) {
-    throw new Error(
-      `OpenAI API error: ${response.status} ${await response.text()}`
-    );
-  }
-
-  const data = await response.json();
-
-  if (data.status !== "completed") {
-    throw new Error("OpenAI response was not completed");
-  }
-
-  const result = data.output
-    .find(item => item.type === "message")
-    ?.content.find(item => item.type === "output_text")
-    ?.text;
-
-  if (!result) {
-    throw new Error("OpenAI returned no history data");
-  }
-
-  const parsed = JSON.parse(result);
-
-  return new Response(JSON.stringify(parsed.events), {status: 200});
-}
-
-/*
-         text: {
-          format: {
-            type: "json_schema",
-            name: "history_data",
-            strict: true,
-            schema: {
-              type: "object",
-              properties: {
-                events: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      year: { type: "string" },
-                      city: { type: "string" },
-                      title: { type: "string" },
-                      content: { type: "string" },
-                      longitude: { type: "number" },
-                      latitude: { type: "number" }
-                    },
-                    required: [
-                      "year",
-                      "city",
-                      "title",
-                      "content",
-                      "longitude",
-                      "latitude"
-                    ],
-                    additionalProperties: false
-                  }
-                }
-              },
-              required: ["events"],
-              additionalProperties: false
-            }
-          }
-        }
- * */

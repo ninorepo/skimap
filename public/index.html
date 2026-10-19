@@ -283,6 +283,116 @@
   }
 
 
+#swiper {
+    position: fixed;
+    bottom: 2rem;
+    left: 0rem;
+    width: 100vw;
+    height: 45vh;
+    font-size: 0.8rem;
+    letter-spacing: 0.02rem;
+    line-height: 1.6;
+    padding: 0px;
+    margin: 0px;
+}
+
+#swiper .container {
+    margin: 0px;
+    padding: 0px;
+    width: 100%;
+    height:100%;
+    overflow-x: auto;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    scroll-behavior: smooth;
+}
+
+#swiper .card {
+    height: 100%;
+    width: 35rem;
+    background: rgba(255,255,255,0.7);
+    padding-inline: 2rem;
+    padding-top: 1rem;
+    border-radius: 1rem;
+    flex: 0 0 auto;
+    overflow-y: auto;
+}
+
+#swiper .card h2 {
+    font-size: 1.7rem;
+    font-weight: bold;
+    color: black;
+    line-height: 1;
+    letter-spacing:-0.08rem;
+    margin-block: 0.2rem;
+}
+
+#swiper .card .subtitle {
+    font-size: 0.8rem;
+}
+
+#swiper .card .label {
+    font-weight: bolder;
+    letter-spacing:-0.05rem;
+    color: chocolate;
+    margin-top: 0.7rem;
+}
+
+#swiper .card span {
+    display: inline-block;
+    padding-inline: 0.5rem;
+    margin-block: 0.1rem
+    margin-inline: 0.1rem;
+    border-radius: 1rem;
+    background: coral;
+    color: white;
+    font-size: 0.7rem;
+}
+
+#swiper .card .eyebrow {
+    font-size: 0.8rem;
+    color: darkslateblue;
+    font-weight:600;
+    text-align: right; 
+}
+
+#swiper-button {
+	transition: 0.2s;
+}
+
+
+#swiper-button, #swiper {
+    transition: 0.5s;
+}
+
+#swiper-button {
+    position: fixed;
+    left: 1rem;
+    bottom: 45vh;
+    z-index: 999;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 999px;
+    background: white;
+    opacity: 0.5;
+    transform: translateY(-2.5rem);
+}
+
+.swiper-button-down {
+    bottom: 0rem !important;
+    transform: translateY(-0.5rem) !important;
+    transform: rotate(180deg) !important;
+}
+
+.swiper-hide {
+    
+    width: 0rem !important;
+    height: 0rem !important;
+    opacity: 0;
+}
+ 
+      
     @media (max-width: 480px) {
       #prompt {
         top: .75rem;
@@ -324,7 +434,7 @@
         Jalankan
       </button>
     </section>
-
+<!--
     <section id="menu" style="display:none;">
       <button id="save" class="btn btn-primary btn-sm">
         Simpan
@@ -332,6 +442,13 @@
       <button id="load" class="btn btn-outline btn-sm">
         Buka
       </button>
+    </section>
+  -->
+    <section id="control">
+	    <button id="swiper-button"><span>▼<span></button>
+    </section>
+    <section id="swiper">
+	<div class="container"></div>
     </section>
   </main>
 

@@ -1,5 +1,10 @@
 // GLOBALS
 const UI = { // ui start
+swiper_button:  document.getElementById("swiper-button"),
+swiper_section: document.getElementById("swiper"),
+swiper_container: document.querySelector("#swiper .container")
+,
+
 
 loading: async function (elem, func)
 {
@@ -32,9 +37,54 @@ read_more: function (title, content, quiz_data)
 			resolve(true);
 		};
 	});
-}
+},
 
+swiper: function (container, data, globe)
+{
+	container.innerHTML = "";	
+	data.forEach( elem => {
+		const card = document.createElement("div");
+		card.className = "card";
+		const html = `
+				<p class="eyebrow">${elem.year}⸱${elem.city}</p>
+				<h2>${elem.title}</h2>
+				<p><span>${elem.categories.join("</span><span>")}</span></p>
+				<p class="label">DAMPAK</p> 
+					<p>${elem.impact}</p>			
+				<p class="label">TOKOH</p>
+					<p>${elem.figures.join("⸱")}</p>
+				<p class="label">BUKTI</p> 
+					<p>${elem.evidences.join("⸱")}</p>
+		`;
+		card.innerHTML = html;
+		card.onclick = () => {
+			globe.pointOfView({
+				lat: elem.latitude,
+				lng: elem.longitude,
+				altitude: 0.5
+			}, 1000);
+		};
+		container.appendChild(card);
+	});
+},
+
+init_swiper_button: function () {
+	UI.swiper_button.addEventListener("click", (e) => {
+		UI.swiper_button.classList.toggle("swiper-button-down");
+		UI.swiper_section.classList.toggle("swiper-hide");
+	});
+},
+
+init_swiper: function (){
+		UI.swiper_container.addEventListener("wheel", e => {
+			e.preventDefault();
+			UI.swiper_container.scrollLeft += e.deltaY;
+		}, {passive: false});
+}
 }; // ui end
+
+UI.init_swiper_button();
+UI.init_swiper();
 
 let gpt_response = [];
 const markers = new Map();
@@ -119,6 +169,8 @@ init_prompt(globe);
 // FUNCTIONS
 async function init()
 {
+	UI.swiper_section.classList.add("swiper-hide");
+	UI.swiper_button.classList.add("swiper-button-down");
 	return true;
 }
 
@@ -151,47 +203,23 @@ function init_prompt(globe)
 			const data = await response.json();
 			gpt_response = structuredClone(data);
 			console.log("prompt events: ", data);
+			if(data.length === 0)
+				return;
 			// clean markers to pervent redundant
 			markers.clear();
 			// reload data and auto focus
 			globe.htmlElementsData(data).pointOfView({
-				lat: gpt_response[0].latitude,
-				lng: gpt_response[0].longitude,
+				lat: data[0].latitude,
+				lng: data[0].longitude,
 				altitude: 1.5
 			},
 			1000);
-			console.log("markers :", markers);
+		        
+			UI.swiper_button.classList.toggle("swiper-button-down");
+			UI.swiper_section.classList.toggle("swiper-hide");
+			const swiper_container = document.querySelector("#swiper .container");
+			UI.swiper(swiper_container, data, globe);
 		});
 	});
 }
-async function point_click_handler(pt, ev)
-{
-	// fetch contents
-	const button = ev.target;
-	const response = await fetch("/api/contents?year=" + current_year + "&city=" + pt.city);
-	if (!response)
-	{
-		console.log("button_year_handler(): failed to fetch /api/contents");
-		return false;
-	}
-	const data = await response.json();
-	if (!data)
-	{
-		console.log("failed to load locations json");
-		return false;
-	}
-	// foereach content append wrapper+title+content to #content dialog
-	content.innerHTML = "";
-	data.contents.forEach((elem) =>
-	{
-		const html = `
-			<div class="container">
-				<h2>${elem.title}</h2>
-				<p>${elem.content}</p>
-			</div>
-			`;
-		content.insertAdjacentHTML("beforeend", html);
-	});
-	// open content dialog
-	dialog_content.showModal();
-}
+
