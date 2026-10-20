@@ -343,18 +343,13 @@
     text-align: right; 
 }
 
-#swiper-button {
-	transition: 0.2s;
-}
-
-
 #swiper-button, #swiper {
     transition: 0.5s;
 }
 
 #swiper-button {
     position: fixed;
-    left: 1rem;
+    right: 1rem;
     bottom: 45vh;
     z-index: 999;
     width: 3rem;
@@ -386,6 +381,22 @@
     scroll-snap-align: start;
 }
 */
+/*
+#setup {
+    position: fixed;
+    right: 1rem;
+    top: 20vh;
+    z-index: 999;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 999px;
+    background: white;
+    opacity: 0.5;
+    transform: translateY(-2.5rem);
+}
+*/
+
+
   @media (max-width: 640px) {
     #read-more .modal-box {
       width: 100%;
@@ -462,17 +473,16 @@
         Jalankan
       </button>
     </section>
+
 <!--
-    <section id="menu" style="display:none;">
-      <button id="save" class="btn btn-primary btn-sm">
-        Simpan
-      </button>
-      <button id="load" class="btn btn-outline btn-sm">
-        Buka
-      </button>
-    </section>
+	CONTROLS
   -->
     <section id="control">
+	    <!--
+	    <div id="setup">
+	    	<button id="setup-button"><span>⚙</span></button>
+	    </div>
+	    -->
 	    <button id="swiper-button"><span>▼<span></button>
     </section>
     <section id="swiper">
