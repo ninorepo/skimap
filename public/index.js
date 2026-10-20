@@ -31,6 +31,7 @@ read_more: function (title, content, quiz_data)
 		div.innerHTML = content;
 		quiz(quiz_container, quiz_data);
 		dialog.showModal();
+		dialog.scrollTop = 0; // force dialog scroll viewport to show content title first, not the center of trhe content
 		close.onclick = () =>
 		{
 			dialog.close();
