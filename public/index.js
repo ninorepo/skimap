@@ -77,10 +77,21 @@ init_swiper_button: function () {
 },
 
 init_swiper: function (){
+		// horizontall scroll using mousewheel
 		UI.swiper_container.addEventListener("wheel", e => {
 			e.preventDefault();
 			UI.swiper_container.scrollLeft += e.deltaY;
 		}, {passive: false});
+
+		// snap when using touch
+		UI.swiper_container.addEventListener("touchend", e => {
+			const card = e.target.closest(".card");
+			card.scrollIntoView({
+				behaviour: "smooth",
+				block: "nearest",
+				inline: "center"
+			});
+		});
 }
 }; // ui end
 
