@@ -84,6 +84,7 @@ init_swiper: function (){
 		}, {passive: false});
 
 		// snap when using touch
+	/*
 		UI.swiper_container.addEventListener("touchend", e => {
 			const card = e.target.closest(".card");
 			card.scrollIntoView({
@@ -92,6 +93,7 @@ init_swiper: function (){
 				inline: "center"
 			});
 		});
+	*/
 }
 }; // ui end
 
